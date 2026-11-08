@@ -59,6 +59,10 @@ Juno is the default voice (`--voice juno`); `--seed` picks the take (same seed +
 lists every piece the engine speaks. Prefer `speak.py` over Underdog's own `python -m underdog_woof`, which skips the
 preprocessing below.
 
+## Tip about Voices
+This model supports two voices, Mira and Juno. Juno is a great sounding voice, but Mira sounded quite bad with lots of
+very audible static and other auditory artifacts, so I highly recommend sticking with Juno.
+
 ## Why preprocess
 
 Underdog's engine speaks text in pieces. Its splitter (`underdog_woof/textsplit.py`) cuts every sentence longer than
