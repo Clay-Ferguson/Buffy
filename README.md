@@ -5,6 +5,8 @@ Underdog's own Python code from huggingface, plus our own text preprocessor that
 Underdog's rule-based text normalizer reads numbers, dates, times, money, units, codes, URLs and abbreviations aloud the way
 people say them, and its lexicon respells about 25,000 hard names and foreign words. See also: [Underdog Website](https://underdog.ai)
 
+### Sample Audio: [Juno Voice](<Sample - Juno Voice - Gettysburg Address.wav>)
+
 ## Files
 
 | File | What it is |
