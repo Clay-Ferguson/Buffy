@@ -1,0 +1,7 @@
+[project]
+name = "buffy"
+version = "0.1.0"
+description = "Underdog Woof TTS (Juno voice) using Underdog's own audited Python package"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24"]

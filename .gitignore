@@ -1,0 +1,6 @@
+.venv/
+out/
+__pycache__/
+# Underdog files fetched by setup.sh
+underdog_woof/
+woof_int8.npz
