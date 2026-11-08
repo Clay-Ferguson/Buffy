@@ -1,10 +1,9 @@
 # Buffy
 
 Runs the [Underdog Woof](https://huggingface.co/ConwayResearch/Underdog-Woof) text-to-speech model (Juno voice) with
-Underdog's own Python code from huggingface, 
-plus our own text preprocessor that prevents repeated phrases (see "Why preprocess" below).
+Underdog's own Python code from huggingface, plus our own text preprocessor that prevents repeated phrases (see "Why preprocess" below).
 Underdog's rule-based text normalizer reads numbers, dates, times, money, units, codes, URLs and abbreviations aloud the way
-people say them, and its lexicon respells about 25,000 hard names and foreign words.
+people say them, and its lexicon respells about 25,000 hard names and foreign words. See also: [Underdog Website](https://underdog.ai)
 
 ## Files
 
