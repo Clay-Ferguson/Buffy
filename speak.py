@@ -18,6 +18,11 @@ from preprocess import preprocess
 HERE = Path(__file__).resolve().parent
 
 
+def _mmss(seconds):
+    m, s = divmod(int(round(seconds)), 60)
+    return f"{m}:{s:02d}"
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("text", nargs="?", help="text to speak (or use --file)")
@@ -38,11 +43,31 @@ def main():
     units = preprocess(text)
     if not units:
         ap.error("no text to speak")
-    for unit in units:
-        for piece in split_text(unit):          # the pieces Underdog's engine will synthesize, for the log
-            print(f"  piece: {piece}", file=sys.stderr)
+    # the pieces Underdog's engine will synthesize, split the same way Woof.__call__ splits them
+    pieces = [p for unit in units for p in (split_text(unit) or [unit])]
+    total_chars = sum(len(p) for p in pieces)
+    print(f"Speaking {len(pieces)} pieces ({total_chars} characters) with {a.voice}...", file=sys.stderr, flush=True)
 
     tts = Woof(voice=a.voice, temp=a.temp, normalize=False)    # already normalized by preprocess()
+
+    # Underdog's engine has no progress hook, so we wrap this instance's per-piece method (Underdog's files are
+    # untouched) to print one line as each piece finishes. Plain lines, not a redrawn bar, so test.sh's log stays clean.
+    engine_piece = tts._piece
+    done = {"pieces": 0, "chars": 0}
+
+    def piece_with_progress(piece):
+        wav = engine_piece(piece)
+        done["pieces"] += 1
+        done["chars"] += len(piece)
+        spent = time.perf_counter() - t
+        left = spent * (total_chars - done["chars"]) / max(1, done["chars"])   # time tracks text length
+        pct = 100 * done["chars"] // max(1, total_chars)
+        print(f"[{done['pieces']:>{len(str(len(pieces)))}}/{len(pieces)} {pct:3d}%  {_mmss(spent)} elapsed  "
+              f"~{_mmss(left)} left] {piece}", file=sys.stderr, flush=True)
+        return wav
+
+    tts._piece = piece_with_progress
+
     t = time.perf_counter()
     # one engine call per line; the seed is set once, so the whole run is reproducible
     audio = np.concatenate([tts(unit, seed=a.seed if k == 0 else None) for k, unit in enumerate(units)])
