@@ -11,7 +11,8 @@ people say them, and its lexicon respells about 25,000 hard names and foreign wo
 
 | File | What it is |
 |---|---|
-| `speak.py` | Command line entry point: our preprocessor, then Underdog's engine, one engine call per line |
+| `speak.py` | Command line entry point: our preprocessor, then Underdog's engine, one engine call per line. Speaks one text, or a batch of files with the model loaded once |
+| `tts.sh` | Makes Buffy a [kocreator](https://github.com/Clay-Ferguson/kocreator) TTS plugin (see "Use with kocreator" below) |
 | `preprocess.py` | Our text preprocessor (see "Why preprocess" below) |
 | `setup.sh` | One-step setup: fetches Underdog's package and weights from the audited commit, then `uv sync` |
 | `test.sh` | Lists the documents in `input-docs/` by number, speaks the one you pick to `out/<name>.wav`, logs to `out/run_log.txt` |
@@ -60,6 +61,44 @@ uv run speak.py --file input-docs/story.txt --seed 3        # writes out/story.w
 Juno is the default voice (`--voice juno`); `--seed` picks the take (same seed + same text = same audio). The log
 lists every piece the engine speaks. Prefer `speak.py` over Underdog's own `python -m underdog_woof`, which skips the
 preprocessing below.
+
+### Batches
+
+To speak many files, give `speak.py` a batch file instead of `--file`. It loads the model once and speaks every job in
+order. The batch file has one job per line, three tab-separated fields: the input text file, the output WAV, and the
+seed (leave it empty to use `--seed`):
+
+```bash
+printf '%s\t%s\t\n%s\t%s\t3\n' in/a.txt out/a.wav in/b.txt out/b.wav > jobs.tsv
+uv run speak.py --batch jobs.tsv            # a.wav with --seed (0), b.wav with seed 3
+```
+
+After writing each WAV it prints `KOCREATOR_DONE <n>` (the 1-based job number) on its own line, which is how kocreator
+follows progress. The seed is set at the start of each text, so a text spoken in a batch gives exactly the same audio
+as the same text and seed spoken alone. `--voice` and `--temp` apply to the whole batch.
+
+## Use with kocreator
+
+Buffy is also a TTS plugin for [kocreator](https://github.com/Clay-Ferguson/kocreator), which builds narrated demo
+videos from screenshots and text. With Buffy checked out next to kocreator and set up, put this in kocreator's
+`kocreator.toml`:
+
+```toml
+tts_plugin = "../Buffy"
+```
+
+kocreator then calls `tts.sh`, which implements kocreator's plugin contract:
+
+- `./tts.sh check` exits 0 when Buffy is set up (Underdog's files are present and uv is installed).
+- `./tts.sh settings` prints the voice settings as JSON. kocreator keys its cache on them.
+- `./tts.sh speak <jobs.tsv>` runs `speak.py --batch` once for all of kocreator's narrations.
+
+The voice settings kocreator uses (`VOICE`, `SEED`, `TEMP`) are variables at the top of `tts.sh`. kocreator's
+per-clip `.seed` files fill the seed field of the batch, so one glitchy clip can be re-rolled without touching the
+others. `tts.sh` drops `UV_PROJECT_ENVIRONMENT` and `VIRTUAL_ENV`, so Buffy always runs in its own `.venv`, and Buffy
+honours the `OMP_NUM_THREADS`/`OPENBLAS_NUM_THREADS` thread limits kocreator sets. The cache key doesn't include
+Buffy's version, so after changing `preprocess.py` or moving to a newer Underdog commit, delete kocreator's
+`generated-wav/` folders to regenerate every clip.
 
 ## Tip about Voices
 This model supports two voices, Mira and Juno. Juno is a great sounding voice, but Mira sounded quite bad with lots of
